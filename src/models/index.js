@@ -68,17 +68,22 @@
 const { Sequelize } = require("sequelize");
 require("dotenv").config();
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME || "railway",
-  process.env.DB_USER || "root",
-  process.env.DB_PASSWORD || "",
-  {
-    host: process.env.DB_HOST || "localhost",
-    port: parseInt(process.env.DB_PORT) || 3306,
+console.log("🔧 Initializing database connection...");
+
+let sequelize;
+
+// ✅ Priority 1: Use DATABASE_URL (Railway internal URL)
+if (process.env.DATABASE_URL) {
+  console.log(
+    "✅ Using DATABASE_URL:",
+    process.env.DATABASE_URL.replace(/:[^:]*@/, ":****@"),
+  );
+
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: "mysql",
     logging: process.env.NODE_ENV === "production" ? false : console.log,
     pool: {
-      max: parseInt(process.env.DB_CONNECTION_LIMIT) || 10,
+      max: 10,
       min: 0,
       acquire: 30000,
       idle: 10000,
@@ -92,15 +97,68 @@ const sequelize = new Sequelize(
       collate: "utf8mb4_unicode_ci",
       timestamps: true,
     },
-  },
-);
+  });
+}
+// ✅ Priority 2: Use individual Railway variables
+else if (process.env.DB_HOST) {
+  console.log("✅ Using individual DB credentials");
+  console.log("   Host:", process.env.DB_HOST);
+  console.log("   Port:", process.env.DB_PORT);
+  console.log("   Database:", process.env.DB_NAME);
+  console.log("   User:", process.env.DB_USER);
+
+  sequelize = new Sequelize(
+    process.env.DB_NAME || "railway",
+    process.env.DB_USER || "root",
+    process.env.DB_PASSWORD || "",
+    {
+      host: process.env.DB_HOST || "localhost",
+      port: parseInt(process.env.DB_PORT) || 3306,
+      dialect: "mysql",
+      logging: process.env.NODE_ENV === "production" ? false : console.log,
+      pool: {
+        max: 10,
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+      },
+      dialectOptions: {
+        connectTimeout: 60000,
+        charset: "utf8mb4",
+      },
+      define: {
+        charset: "utf8mb4",
+        collate: "utf8mb4_unicode_ci",
+        timestamps: true,
+      },
+    },
+  );
+}
+// ✅ Priority 3: Fallback to localhost (development)
+else {
+  console.log("⚠️  Using localhost fallback (development)");
+
+  sequelize = new Sequelize("ecommerce", "root", "", {
+    host: "localhost",
+    port: 3306,
+    dialect: "mysql",
+    logging: console.log,
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000,
+    },
+  });
+}
 
 const db = {};
-
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 // Import all models
+console.log("📦 Loading models...");
+
 db.User = require("./user.model")(sequelize, Sequelize);
 db.Customer = require("./customer")(sequelize, Sequelize);
 db.Product = require("./Product")(sequelize, Sequelize);
@@ -120,11 +178,6 @@ db.RolePermission = require("./RolePermission")(sequelize, Sequelize);
 db.Staff = require("./Staff")(sequelize, Sequelize);
 db.StaffModel = require("./StaffModel")(sequelize, Sequelize);
 
-// Define associations if needed
-// Example:
-// db.Product.belongsTo(db.Category, { foreignKey: 'category_id' });
-// db.Product.belongsTo(db.Brand, { foreignKey: 'brand_id' });
-// db.Product.belongsTo(db.Supplier, { foreignKey: 'supplier_id' });
-// Add more associations as needed
+console.log("✅ All models loaded");
 
 module.exports = db;
