@@ -597,6 +597,7 @@ const settingsRoutes = require("./src/routes/settingsRoute");
 const dashboardRoute = require("./src/routes/dashboardRoute");
 const stockRoutes = require("./src/routes/stockRoutes");
 const StaffRoutes = require("./src/routes/StaffRoute");
+const { sequelize } = require("./src/config/db");
 
 // DB
 const db = require("./src/config/db");

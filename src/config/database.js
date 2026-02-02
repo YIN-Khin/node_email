@@ -69,33 +69,3 @@ const sequelize = process.env.DATABASE_URL
     );
 
 module.exports = sequelize;
-
-// // Initialize Sequelize
-// const sequelize = process.env.DATABASE_URL
-//   ? new Sequelize(process.env.DATABASE_URL, {
-//       dialect: "mysql",
-//       logging: false,
-//       dialectOptions: {
-//         ssl: {
-//           require: true,
-//           rejectUnauthorized: false,
-//         },
-//       },
-//     })
-//   : new Sequelize(
-//       process.env.DB_NAME,
-//       process.env.DB_USER,
-//       process.env.DB_PASSWORD,
-//       {
-//         host: process.env.DB_HOST,
-//         port: process.env.DB_PORT,
-//         dialect: "mysql",
-//         logging: false,
-//       },
-//     );
-
-// // 👇 TEST CONNECTION HERE
-// sequelize
-//   .authenticate()
-//   .then(() => console.log("✅ Database connected"))
-//   .catch((err) => console.error("❌ DB connection error:", err.message));
