@@ -2,6 +2,8 @@
 // All model imports and associations are handled in src/config/db.js
 
 // module.exports = {};
+const fs = require("fs");
+const path = require("path");
 const Sequelize = require("sequelize");
 const sequelize = require("../config/db");
 
@@ -9,28 +11,19 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-// ✅ load models
-db.Product = require("./Product")(sequelize, Sequelize.DataTypes);
-db.Brand = require("./Brand")(sequelize, Sequelize.DataTypes);
-db.Category = require("./Category")(sequelize, Sequelize.DataTypes);
-db.Supplier = require("./Supplier")(sequelize, Sequelize.DataTypes);
-db.User = require("./User")(sequelize, Sequelize.DataTypes);
-db.Role = require("./Role")(sequelize, Sequelize.DataTypes);
-db.Permission = require("./Permission")(sequelize, Sequelize.DataTypes);
-db.RolePermission = require("./RolePermission")(sequelize, Sequelize.DataTypes);
-db.Customer = require("./Customer")(sequelize, Sequelize.DataTypes);
-db.Purchase = require("./Purchase")(sequelize, Sequelize.DataTypes);
-db.PurchaseItem = require("./PurchaseItem")(sequelize, Sequelize.DataTypes);
-db.Sale = require("./Sale")(sequelize, Sequelize.DataTypes);
-db.SaleItem = require("./SaleItem")(sequelize, Sequelize.DataTypes);
-db.Payment = require("./Payment")(sequelize, Sequelize.DataTypes);
-db.Notification = require("./Notification")(sequelize, Sequelize.DataTypes);
-db.Setting = require("./Setting")(sequelize, Sequelize.DataTypes);
-db.Staff = require("./Staff")(sequelize, Sequelize.DataTypes);
+fs.readdirSync(__dirname)
+  .filter((file) => file !== "index.js" && file.endsWith(".js"))
+  .forEach((file) => {
+    const modelFactory = require(path.join(__dirname, file));
+    if (typeof modelFactory === "function") {
+      const model = modelFactory(sequelize, Sequelize.DataTypes);
+      db[model.name] = model;
+    }
+  });
 
-// ✅ associations
+// associations
 Object.keys(db).forEach((name) => {
-  if (db[name]?.associate) db[name].associate(db);
+  if (db[name].associate) db[name].associate(db);
 });
 
 module.exports = db;

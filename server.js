@@ -783,7 +783,7 @@ const dashboardRoute = require("./src/routes/dashboardRoute");
 const stockRoutes = require("./src/routes/stockRoutes");
 const StaffRoutes = require("./src/routes/StaffRoute");
 
-// ✅ Use models (loads all models + associations)
+// ✅ Load models + sequelize
 const db = require("./src/models");
 const sequelize = db.sequelize;
 
@@ -794,32 +794,32 @@ const expirationChecker = require("./src/jobs/expirationChecker");
 const app = express();
 const server = http.createServer(app);
 
-// Allowed origins
+// ✅ Allowed origins from ENV
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
   : ["http://localhost:3000"];
 
-// CORS
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
-      if (allowedOrigins.includes("*")) return cb(null, true);
-      if (allowedOrigins.includes(origin)) return cb(null, true);
-      return cb(new Error(`CORS blocked: ${origin}`));
-    },
-    credentials: false,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  }),
-);
+const corsOptions = {
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true); // Postman/curl/server-to-server
+    if (allowedOrigins.includes("*")) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error(`CORS blocked: ${origin}`));
+  },
+  credentials: false,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+};
 
-// ✅ Preflight (avoid "*" bug)
-app.options(/.*/, cors());
+// ✅ CORS
+app.use(cors(corsOptions));
+
+// ✅ Preflight (IMPORTANT: use same options)
+app.options(/.*/, cors(corsOptions));
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Socket.IO
+// ✅ Socket.IO
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins.includes("*") ? "*" : allowedOrigins,
@@ -828,21 +828,34 @@ const io = new Server(server, {
   },
   transports: ["websocket", "polling"],
 });
+
 app.set("io", io);
 
-// Health
+io.on("connection", (socket) => {
+  socket.on("disconnect", () => {});
+});
+
+// ✅ Health check
 app.get("/health", async (req, res) => {
   try {
     await sequelize.authenticate();
-    res.json({ status: "OK", db: "connected", time: new Date().toISOString() });
+    res.json({
+      status: "OK",
+      db: "connected",
+      env: process.env.NODE_ENV || "development",
+      time: new Date().toISOString(),
+    });
   } catch (err) {
-    res
-      .status(500)
-      .json({ status: "ERROR", db: "disconnected", error: err.message });
+    res.status(500).json({
+      status: "ERROR",
+      db: "disconnected",
+      error: err.message,
+      time: new Date().toISOString(),
+    });
   }
 });
 
-// Routes
+// ✅ Routes
 app.use("/api", reportRoutes);
 app.use("/api", dashboardRoute);
 
@@ -864,14 +877,16 @@ Role(app);
 stockRoutes(app);
 StaffRoutes(app);
 
-// 404
+// ✅ 404
 app.use((req, res) => {
-  res
-    .status(404)
-    .json({ message: "Route not found", path: req.path, method: req.method });
+  res.status(404).json({
+    message: "Route not found",
+    path: req.path,
+    method: req.method,
+  });
 });
 
-// Error handler
+// ✅ Error handler
 app.use((err, req, res, next) => {
   res.status(500).json({
     message: err.message || "Internal error",
@@ -879,11 +894,17 @@ app.use((err, req, res, next) => {
   });
 });
 
-// DB sync
+// ✅ DB sync (SAFE)
 async function syncDatabase() {
   try {
     await sequelize.authenticate();
-    await sequelize.sync({ alter: process.env.NODE_ENV !== "production" });
+
+    if (process.env.NODE_ENV === "production") {
+      await sequelize.sync({ alter: false });
+    } else {
+      await sequelize.sync({ alter: true });
+    }
+
     return true;
   } catch (e) {
     console.error("❌ DB sync/auth error:", e.message);
@@ -891,7 +912,7 @@ async function syncDatabase() {
   }
 }
 
-// Start server
+// ✅ Start server
 const PORT = process.env.PORT || 3001;
 
 server.listen(PORT, "0.0.0.0", async () => {
@@ -905,6 +926,18 @@ server.listen(PORT, "0.0.0.0", async () => {
     return;
   }
 
-  stockLevelChecker.start();
-  expirationChecker.start();
+  // ✅ Start jobs safely
+  try {
+    stockLevelChecker.start();
+    console.log("✅ Stock level checker started");
+  } catch (e) {
+    console.error("❌ Stock checker error:", e.message);
+  }
+
+  try {
+    expirationChecker.start();
+    console.log("✅ Expiration checker started");
+  } catch (e) {
+    console.error("❌ Expiration checker error:", e.message);
+  }
 });
