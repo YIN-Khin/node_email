@@ -14,16 +14,16 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: 'purchases',
-          key: 'id',
+          model: "purchases",
+          key: "id",
         },
       },
       product_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: 'products',
-          key: 'id',
+          model: "products",
+          key: "id",
         },
       },
       qty: {
@@ -41,31 +41,33 @@ module.exports = (sequelize) => {
       manufacture_date: {
         type: DataTypes.DATE,
         allowNull: true,
+        defaultValue: null,
       },
       expire_date: {
         type: DataTypes.DATE,
         allowNull: true,
+        defaultValue: null,
       },
     },
     {
       tableName: "purchase_items",
       timestamps: false,
-    }
+    },
   );
 
   // Define associations
-  PurchaseItem.associate = function(models) {
+  PurchaseItem.associate = function (models) {
     try {
       if (models.Purchase) {
-        PurchaseItem.belongsTo(models.Purchase, { 
+        PurchaseItem.belongsTo(models.Purchase, {
           foreignKey: "purchase_id",
-          as: "Purchase"
+          as: "Purchase",
         });
       }
       if (models.Product) {
-        PurchaseItem.belongsTo(models.Product, { 
+        PurchaseItem.belongsTo(models.Product, {
           foreignKey: "product_id",
-          as: "Product"
+          as: "Product",
         });
       }
     } catch (error) {

@@ -895,10 +895,15 @@ app.use((err, req, res, next) => {
 });
 
 // ✅ DB sync (SAFE)
+const isProd = process.env.NODE_ENV === "production";
 async function syncDatabase() {
   try {
     await sequelize.authenticate();
 
+    await sequelize.authenticate();
+
+    // ✅ production: never alter
+    await sequelize.sync({ alter: !isProd });
     if (process.env.NODE_ENV === "production") {
       await sequelize.sync({ alter: false });
     } else {
