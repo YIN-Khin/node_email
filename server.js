@@ -576,7 +576,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
-const socketIo = require("socket.io");
+const { Server } = require("socket.io");
 
 // Routes
 const customerRoute = require("./src/routes/customerRoute");
@@ -599,7 +599,7 @@ const stockRoutes = require("./src/routes/stockRoutes");
 const StaffRoutes = require("./src/routes/StaffRoute");
 
 // DB
-const db = require("./src/config/db"); // make sure db exports { sequelize }
+const db = require("./src/config/db");
 const sequelize = db.sequelize;
 
 // Jobs
@@ -609,42 +609,41 @@ const expirationChecker = require("./src/jobs/expirationChecker");
 const app = express();
 const server = http.createServer(app);
 
-// ===== CORS =====
-// ✅ Production: put your frontend url in ALLOWED_ORIGINS
-// Example: ALLOWED_ORIGINS=https://your-frontend.vercel.app,http://localhost:3000
+// ✅ Allowed origins from ENV (Railway)
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
   : ["http://localhost:3000"];
 
+// ✅ Express CORS
 app.use(
   cors({
     origin: (origin, cb) => {
-      // allow server-to-server / postman / curl
       if (!origin) return cb(null, true);
-
-      // allow all when wildcard is set
       if (allowedOrigins.includes("*")) return cb(null, true);
-
       if (allowedOrigins.includes(origin)) return cb(null, true);
       return cb(new Error(`CORS blocked: ${origin}`));
     },
     credentials: false,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   }),
 );
+
+// ✅ Preflight
+app.options("*", cors());
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// ===== Socket.IO =====
-const io = socketIo(server, {
+// ✅ Socket.IO (use same allowedOrigins)
+const io = new Server(server, {
   cors: {
     origin: allowedOrigins.includes("*") ? "*" : allowedOrigins,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: false,
   },
   transports: ["websocket", "polling"],
 });
+
 app.set("io", io);
 
 io.on("connection", (socket) => {
@@ -654,7 +653,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// ===== Health check =====
+// ✅ Health check
 app.get("/health", async (req, res) => {
   try {
     await sequelize.authenticate();
@@ -674,7 +673,7 @@ app.get("/health", async (req, res) => {
   }
 });
 
-// ===== Routes =====
+// ✅ Routes
 app.use("/api", reportRoutes);
 app.use("/api", dashboardRoute);
 
@@ -696,7 +695,7 @@ Role(app);
 stockRoutes(app);
 StaffRoutes(app);
 
-// ===== 404 =====
+// ✅ 404
 app.use((req, res) => {
   res.status(404).json({
     message: "Route not found",
@@ -705,7 +704,7 @@ app.use((req, res) => {
   });
 });
 
-// ===== Error handler =====
+// ✅ Error handler
 app.use((err, req, res, next) => {
   res.status(500).json({
     message: err.message || "Internal error",
@@ -713,19 +712,11 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ===== DB Sync =====
+// ✅ DB Sync
 async function syncDatabase() {
   try {
     await sequelize.authenticate();
-
-    // ✅ production: do NOT force/alter
-    if (process.env.NODE_ENV === "production") {
-      await sequelize.sync({ alter: false });
-    } else {
-      // dev only: you may use alter true if you want
-      await sequelize.sync({ alter: true });
-    }
-
+    await sequelize.sync({ alter: process.env.NODE_ENV !== "production" });
     return true;
   } catch (error) {
     console.error("❌ DB sync/auth error:", error.message);
@@ -733,37 +724,31 @@ async function syncDatabase() {
   }
 }
 
-// ===== Start Server =====
+// ✅ Start server
 const PORT = process.env.PORT || 3001;
 
-server
-  .listen(PORT, "0.0.0.0", async () => {
-    console.log(`✅ Server running on port ${PORT}`);
+server.listen(PORT, "0.0.0.0", async () => {
+  console.log(`✅ Server running on port ${PORT}`);
 
-    const ok = await syncDatabase();
-    if (!ok) {
-      console.warn(
-        "⚠️ Server running but DB not connected. Jobs will not start.",
-      );
-      return;
-    }
+  const ok = await syncDatabase();
+  if (!ok) {
+    console.warn(
+      "⚠️ Server running but DB not connected. Jobs will not start.",
+    );
+    return;
+  }
 
-    // Start background jobs only after DB connected
-    try {
-      stockLevelChecker.start();
-      console.log("✅ Stock level checker started");
-    } catch (e) {
-      console.error("❌ Stock checker error:", e.message);
-    }
+  try {
+    stockLevelChecker.start();
+    console.log("✅ Stock level checker started");
+  } catch (e) {
+    console.error("❌ Stock checker error:", e.message);
+  }
 
-    try {
-      expirationChecker.start();
-      console.log("✅ Expiration checker started");
-    } catch (e) {
-      console.error("❌ Expiration checker error:", e.message);
-    }
-  })
-  .on("error", (err) => {
-    console.error("❌ Server error:", err.message);
-    process.exit(1);
-  });
+  try {
+    expirationChecker.start();
+    console.log("✅ Expiration checker started");
+  } catch (e) {
+    console.error("❌ Expiration checker error:", e.message);
+  }
+});

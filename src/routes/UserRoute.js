@@ -39,8 +39,8 @@ const {
 } = require("../controllers/UserController");
 
 module.exports = (app) => {
-  app.post("/login", login);
-  app.post("/register", register);
+  app.post("/api/login", login);
+  app.post("/api/register", register);
 
   // 🔓 PUBLIC
   app.post("/api/user/sendOtp", sendOTP);
