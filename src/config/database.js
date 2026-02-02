@@ -73,28 +73,17 @@
 // src/config/database.js
 require("dotenv").config();
 const { Sequelize } = require("sequelize");
+const path = require("path");
+const fs = require("fs");
 
 const DATABASE_URL = process.env.DATABASE_URL;
-
-// ✅ Railway: DATABASE_URL must be like mysql://user:pass@host:port/dbname
-if (DATABASE_URL && !DATABASE_URL.startsWith("mysql://")) {
-  throw new Error(
-    `DATABASE_URL invalid. It must start with "mysql://". Got: ${DATABASE_URL.slice(
-      0,
-      20,
-    )}...`,
-  );
-}
 
 const sequelize = DATABASE_URL
   ? new Sequelize(DATABASE_URL, {
       dialect: "mysql",
       logging: false,
       dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false,
-        },
+        ssl: { require: true, rejectUnauthorized: false },
       },
     })
   : new Sequelize(
@@ -109,4 +98,34 @@ const sequelize = DATABASE_URL
       },
     );
 
-module.exports = sequelize;
+const db = {};
+db.Sequelize = Sequelize;
+db.sequelize = sequelize;
+
+// ✅ Auto load all model files in src/models
+const modelsPath = path.join(__dirname, "../models");
+const modelFiles = fs
+  .readdirSync(modelsPath)
+  .filter((file) => file.endsWith(".js") && file !== "index.js");
+
+modelFiles.forEach((file) => {
+  const modelPath = path.join(modelsPath, file);
+
+  // IMPORTANT: model file should export (sequelize, DataTypes)=>Model
+  const defineModel = require(modelPath);
+
+  const model = defineModel(sequelize, Sequelize.DataTypes);
+  if (model?.name) db[model.name] = model;
+});
+
+// ✅ Associations
+Object.keys(db).forEach((name) => {
+  if (db[name]?.associate) db[name].associate(db);
+});
+
+console.log(
+  "✅ Sequelize initialized with models:",
+  Object.keys(db).filter((k) => !["sequelize", "Sequelize"].includes(k)),
+);
+
+module.exports = db;
