@@ -571,6 +571,191 @@
 
 //////
 
+// require("dotenv").config();
+
+// const express = require("express");
+// const cors = require("cors");
+// const http = require("http");
+// const { Server } = require("socket.io");
+
+// // Routes
+// const customerRoute = require("./src/routes/customerRoute");
+// const categoryRoute = require("./src/routes/categoryRoute");
+// const brandRoute = require("./src/routes/brandRoute");
+// const productRoute = require("./src/routes/productRoute");
+// const SupplierRoute = require("./src/routes/SupplierRoute");
+// const PurchaseRoute = require("./src/routes/PurchaseRoute");
+// const PurchaseItem = require("./src/routes/PurchaseItemRoute");
+// const Sales = require("./src/routes/SaleRoute");
+// const PaymentRoutes = require("./src/routes/PaymentRoute");
+// const User = require("./src/routes/UserRoute");
+// const Role = require("./src/routes/RoleRoute");
+// const notificationRoutes = require("./src/routes/notificationRoutes");
+// const reportRoutes = require("./src/routes/reportRoutes");
+// const setupRoutes = require("./src/routes/SetupRoute");
+// const settingsRoutes = require("./src/routes/settingsRoute");
+// const dashboardRoute = require("./src/routes/dashboardRoute");
+// const stockRoutes = require("./src/routes/stockRoutes");
+// const StaffRoutes = require("./src/routes/StaffRoute");
+// const { sequelize } = require("./src/config/db");
+
+// // DB
+// const db = require("./src/config/db");
+// // const sequelize = db.sequelize;
+
+// // Jobs
+// const stockLevelChecker = require("./src/jobs/stockLevelChecker");
+// const expirationChecker = require("./src/jobs/expirationChecker");
+
+// const app = express();
+// const server = http.createServer(app);
+
+// // ✅ Allowed origins from ENV (Railway)
+// const allowedOrigins = process.env.ALLOWED_ORIGINS
+//   ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+//   : ["http://localhost:3000"];
+
+// // ✅ Express CORS
+// app.use(
+//   cors({
+//     origin: (origin, cb) => {
+//       if (!origin) return cb(null, true);
+//       if (allowedOrigins.includes("*")) return cb(null, true);
+//       if (allowedOrigins.includes(origin)) return cb(null, true);
+//       return cb(new Error(`CORS blocked: ${origin}`));
+//     },
+//     credentials: false,
+//     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+//   }),
+// );
+
+// // ✅ Preflight
+// // app.options("*", cors());
+// // app.options(/.*/, cors());
+
+// app.use(express.json({ limit: "50mb" }));
+// app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
+// // ✅ Socket.IO (use same allowedOrigins)
+// const io = new Server(server, {
+//   cors: {
+//     origin: allowedOrigins.includes("*") ? "*" : allowedOrigins,
+//     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+//     credentials: false,
+//   },
+//   transports: ["websocket", "polling"],
+// });
+
+// app.set("io", io);
+
+// io.on("connection", (socket) => {
+//   // console.log("🔌 Socket connected:", socket.id);
+//   socket.on("disconnect", () => {
+//     // console.log("🔌 Socket disconnected:", socket.id);
+//   });
+// });
+
+// // ✅ Health check
+// app.get("/health", async (req, res) => {
+//   try {
+//     await db.authenticate();
+//     res.json({
+//       status: "OK",
+//       db: "connected",
+//       env: process.env.NODE_ENV || "development",
+//       time: new Date().toISOString(),
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       status: "ERROR",
+//       db: "disconnected",
+//       error: err.message,
+//       time: new Date().toISOString(),
+//     });
+//   }
+// });
+
+// // ✅ Routes
+// app.use("/api", reportRoutes);
+// app.use("/api", dashboardRoute);
+
+// notificationRoutes(app);
+// setupRoutes(app);
+// settingsRoutes(app);
+
+// customerRoute(app);
+// categoryRoute(app);
+// brandRoute(app);
+// productRoute(app);
+// SupplierRoute(app);
+// PurchaseRoute(app);
+// PurchaseItem(app);
+// Sales(app);
+// PaymentRoutes(app);
+// User(app);
+// Role(app);
+// stockRoutes(app);
+// StaffRoutes(app);
+
+// // ✅ 404
+// app.use((req, res) => {
+//   res.status(404).json({
+//     message: "Route not found",
+//     path: req.path,
+//     method: req.method,
+//   });
+// });
+
+// // ✅ Error handler
+// app.use((err, req, res, next) => {
+//   res.status(500).json({
+//     message: err.message || "Internal error",
+//     ...(process.env.NODE_ENV !== "production" ? { stack: err.stack } : {}),
+//   });
+// });
+
+// // ✅ DB Sync
+// async function syncDatabase() {
+//   try {
+//     await db.authenticate();
+//     await db.sync({ alter: process.env.NODE_ENV !== "production" });
+//     return true;
+//   } catch (error) {
+//     console.error("❌ DB sync/auth error:", error.message);
+//     return false;
+//   }
+// }
+
+// // ✅ Start server
+// const PORT = process.env.PORT || 3001;
+
+// server.listen(PORT, "0.0.0.0", async () => {
+//   console.log(`✅ Server running on port ${PORT}`);
+
+//   const ok = await syncDatabase();
+//   if (!ok) {
+//     console.warn(
+//       "⚠️ Server running but DB not connected. Jobs will not start.",
+//     );
+//     return;
+//   }
+
+//   try {
+//     stockLevelChecker.start();
+//     console.log("✅ Stock level checker started");
+//   } catch (e) {
+//     console.error("❌ Stock checker error:", e.message);
+//   }
+
+//   try {
+//     expirationChecker.start();
+//     console.log("✅ Expiration checker started");
+//   } catch (e) {
+//     console.error("❌ Expiration checker error:", e.message);
+//   }
+// });
+
+///
 require("dotenv").config();
 
 const express = require("express");
@@ -597,11 +782,10 @@ const settingsRoutes = require("./src/routes/settingsRoute");
 const dashboardRoute = require("./src/routes/dashboardRoute");
 const stockRoutes = require("./src/routes/stockRoutes");
 const StaffRoutes = require("./src/routes/StaffRoute");
-const { sequelize } = require("./src/config/db");
 
-// DB
-const db = require("./src/config/db");
-// const sequelize = db.sequelize;
+// ✅ Use models (loads all models + associations)
+const db = require("./src/models");
+const sequelize = db.sequelize;
 
 // Jobs
 const stockLevelChecker = require("./src/jobs/stockLevelChecker");
@@ -610,12 +794,12 @@ const expirationChecker = require("./src/jobs/expirationChecker");
 const app = express();
 const server = http.createServer(app);
 
-// ✅ Allowed origins from ENV (Railway)
+// Allowed origins
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
   : ["http://localhost:3000"];
 
-// ✅ Express CORS
+// CORS
 app.use(
   cors({
     origin: (origin, cb) => {
@@ -629,14 +813,13 @@ app.use(
   }),
 );
 
-// ✅ Preflight
-// app.options("*", cors());
-// app.options(/.*/, cors());
+// ✅ Preflight (avoid "*" bug)
+app.options(/.*/, cors());
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// ✅ Socket.IO (use same allowedOrigins)
+// Socket.IO
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins.includes("*") ? "*" : allowedOrigins,
@@ -645,37 +828,21 @@ const io = new Server(server, {
   },
   transports: ["websocket", "polling"],
 });
-
 app.set("io", io);
 
-io.on("connection", (socket) => {
-  // console.log("🔌 Socket connected:", socket.id);
-  socket.on("disconnect", () => {
-    // console.log("🔌 Socket disconnected:", socket.id);
-  });
-});
-
-// ✅ Health check
+// Health
 app.get("/health", async (req, res) => {
   try {
     await sequelize.authenticate();
-    res.json({
-      status: "OK",
-      db: "connected",
-      env: process.env.NODE_ENV || "development",
-      time: new Date().toISOString(),
-    });
+    res.json({ status: "OK", db: "connected", time: new Date().toISOString() });
   } catch (err) {
-    res.status(500).json({
-      status: "ERROR",
-      db: "disconnected",
-      error: err.message,
-      time: new Date().toISOString(),
-    });
+    res
+      .status(500)
+      .json({ status: "ERROR", db: "disconnected", error: err.message });
   }
 });
 
-// ✅ Routes
+// Routes
 app.use("/api", reportRoutes);
 app.use("/api", dashboardRoute);
 
@@ -697,16 +864,14 @@ Role(app);
 stockRoutes(app);
 StaffRoutes(app);
 
-// ✅ 404
+// 404
 app.use((req, res) => {
-  res.status(404).json({
-    message: "Route not found",
-    path: req.path,
-    method: req.method,
-  });
+  res
+    .status(404)
+    .json({ message: "Route not found", path: req.path, method: req.method });
 });
 
-// ✅ Error handler
+// Error handler
 app.use((err, req, res, next) => {
   res.status(500).json({
     message: err.message || "Internal error",
@@ -714,19 +879,19 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ✅ DB Sync
+// DB sync
 async function syncDatabase() {
   try {
     await sequelize.authenticate();
     await sequelize.sync({ alter: process.env.NODE_ENV !== "production" });
     return true;
-  } catch (error) {
-    console.error("❌ DB sync/auth error:", error.message);
+  } catch (e) {
+    console.error("❌ DB sync/auth error:", e.message);
     return false;
   }
 }
 
-// ✅ Start server
+// Start server
 const PORT = process.env.PORT || 3001;
 
 server.listen(PORT, "0.0.0.0", async () => {
@@ -740,17 +905,6 @@ server.listen(PORT, "0.0.0.0", async () => {
     return;
   }
 
-  try {
-    stockLevelChecker.start();
-    console.log("✅ Stock level checker started");
-  } catch (e) {
-    console.error("❌ Stock checker error:", e.message);
-  }
-
-  try {
-    expirationChecker.start();
-    console.log("✅ Expiration checker started");
-  } catch (e) {
-    console.error("❌ Expiration checker error:", e.message);
-  }
+  stockLevelChecker.start();
+  expirationChecker.start();
 });
