@@ -1,7 +1,8 @@
 const excelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 const { Op } = require('sequelize');
-const db = require('../models');
+// const db = require('../models');
+const db = require('../config/db');
 const Purchase = db.Purchase;
 const PurchaseItem = db.PurchaseItem;
 const Sale = db.Sale;

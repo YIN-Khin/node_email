@@ -151,7 +151,8 @@ const stockRoutes = (app) => {
   app.get('/api/stock/low', auth.validate_token(), async (req, res) => {
     try {
       const { threshold = 10 } = req.query;
-      const db = require('../models');
+      const db = require('../config/db');
+      const { Op } = require('sequelize');
       const Product = db.Product;
       const Brand = db.Brand;
       const Category = db.Category;
@@ -159,7 +160,7 @@ const stockRoutes = (app) => {
       const lowStockProducts = await Product.findAll({
         where: {
           qty: {
-            [db.Sequelize.Op.lte]: parseInt(threshold)
+            [Op.lte]: parseInt(threshold)
           }
         },
         include: [

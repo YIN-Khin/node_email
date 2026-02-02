@@ -1,5 +1,6 @@
 // controllers/SetupController.js
-const db = require('../models');
+// const db = require('../models');
+const db = require('../config/db');
 const Role = db.Role;
 const Permission = db.Permission;
 const RolePermission = db.RolePermission;

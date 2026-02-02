@@ -1,15 +1,14 @@
 const NotificationService = require("../services/notificationService");
-const db = require("../models");
-const { Product, Brand, Category, Notification, Sequelize } = db;
-
-const Op = Sequelize.Op;
+const db = require("../config/db");
+const { Op } = require("sequelize");
+const { Product, Brand, Category, Notification } = db;
 
 class ExpirationChecker {
   constructor() {
     this.isRunning = false;
     this.intervalId = null;
     // this.checkInterval = 24 * 60 * 60 * 1000; // 24 hours - recommended for production
-    this.checkInterval = 1 * 1000; // for development/testing only
+    this.checkInterval = 1 * 60 * 1000; // 1 hours test for production
 
     this.autoDismissInterval = null;
   }
@@ -62,7 +61,7 @@ class ExpirationChecker {
           {
             model: Product,
             as: "Product",
-            attributes: ["id", "expire_date", "updated_at"],
+            attributes: ["id", "expire_date"],
             required: true,
           },
         ],
@@ -78,13 +77,8 @@ class ExpirationChecker {
 
         const daysLeft = Math.ceil((expire - today) / 86400000);
 
-        // Dismiss only if:
-        // 1. Now more than 7 days left
-        // 2. Product was updated after this notification was created
-        const productUpdated = new Date(n.Product.updated_at);
-        const notiCreated = new Date(n.created_at);
-
-        if (daysLeft > 7 && productUpdated > notiCreated) {
+        // Dismiss only if more than 7 days left
+        if (daysLeft > 7) {
           await n.destroy();
           dismissed++;
           console.log(
@@ -212,4 +206,3 @@ class ExpirationChecker {
 
 const expirationChecker = new ExpirationChecker();
 module.exports = expirationChecker;
-

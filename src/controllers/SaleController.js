@@ -359,7 +359,8 @@
 // };
 
 
-const db = require("../models");
+// const db = require("../models");
+const db = require('../config/db');
 const Sales = db.Sale;
 const SaleItems = db.SaleItem;
 const Customer = db.Customer;

@@ -1,5 +1,6 @@
 const { Op } = require("sequelize");
-const db = require('../models');
+// const db = require('../models');
+const db = require('../config/db');
 const Brand = db.Brand;
 const Category = db.Category;
 const Product = db.Product;

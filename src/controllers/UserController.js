@@ -1,9 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const db = require("../models");
-// const roleModel = require("../models/role.model");
-// const user = require("../routes/UserRoute");
-// const roleModel = require("../models/role.model");
+const db = require("../config/db");
 const User = db.User;
 const Role = db.Role;
 const Permission = db.Permission;
@@ -63,19 +60,15 @@ const login = async (req, res) => {
     // Check if models are loaded
     if (!User) {
       console.error("User model is not loaded");
-      return res
-        .status(500)
-        .json({
-          message: "Server configuration error - User model not loaded",
-        });
+      return res.status(500).json({
+        message: "Server configuration error - User model not loaded",
+      });
     }
     if (!Role) {
       console.error("Role model is not loaded");
-      return res
-        .status(500)
-        .json({
-          message: "Server configuration error - Role model not loaded",
-        });
+      return res.status(500).json({
+        message: "Server configuration error - Role model not loaded",
+      });
     }
 
     const user = await User.findOne({
@@ -146,7 +139,7 @@ const login = async (req, res) => {
         TOKEN_SECRET,
         {
           // expiresIn: "10m", // JWT expires after 10 minutes
-           expiresIn: "24h" ,// JWT expires after 1h
+          expiresIn: "24h", // JWT expires after 1h
         },
       );
 
@@ -181,19 +174,15 @@ const createUserByAdmin = async (req, res) => {
     // Check if models are loaded
     if (!User) {
       console.error("User model is not loaded");
-      return res
-        .status(500)
-        .json({
-          message: "Server configuration error - User model not loaded",
-        });
+      return res.status(500).json({
+        message: "Server configuration error - User model not loaded",
+      });
     }
     if (!Role) {
       console.error("Role model is not loaded");
-      return res
-        .status(500)
-        .json({
-          message: "Server configuration error - Role model not loaded",
-        });
+      return res.status(500).json({
+        message: "Server configuration error - Role model not loaded",
+      });
     }
 
     if (!name || !username || !email || !password) {
@@ -269,19 +258,15 @@ const register = async (req, res) => {
     // Check if models are loaded
     if (!User) {
       console.error("User model is not loaded");
-      return res
-        .status(500)
-        .json({
-          message: "Server configuration error - User model not loaded",
-        });
+      return res.status(500).json({
+        message: "Server configuration error - User model not loaded",
+      });
     }
     if (!Role) {
       console.error("Role model is not loaded");
-      return res
-        .status(500)
-        .json({
-          message: "Server configuration error - Role model not loaded",
-        });
+      return res.status(500).json({
+        message: "Server configuration error - Role model not loaded",
+      });
     }
 
     if (!name || !username || !email || !password) {
@@ -540,9 +525,32 @@ const sendOTP = async (req, res) => {
       expiresAt: Date.now() + 10 * 60 * 1000,
     };
 
-    // TODO: Send OTP via email (requires nodemailer setup)
-    // For now, we'll just return success (OTP can be logged for testing)
-    console.log(`OTP for ${email}: ${otp}`); // Remove in production
+    // Send OTP via email
+    try {
+      const { sendEmail } = require("../services/emailService");
+
+      const subject = "Password Reset OTP - IMS System";
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Password Reset Request</h2>
+          <p>Hello,</p>
+          <p>You have requested to reset your password for the IMS System. Please use the following OTP to proceed:</p>
+          <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0;">
+            <h1 style="color: #007bff; font-size: 32px; margin: 0;">${otp}</h1>
+          </div>
+          <p><strong>This OTP will expire in 10 minutes.</strong></p>
+          <p>If you did not request this password reset, please ignore this email.</p>
+          <hr style="margin: 30px 0;">
+          <p style="color: #666; font-size: 12px;">This is an automated message from IMS System. Please do not reply to this email.</p>
+        </div>
+      `;
+
+      await sendEmail(email, subject, html);
+      console.log(`✅ OTP email sent successfully to ${email}`);
+    } catch (emailError) {
+      console.error(`❌ Failed to send OTP email to ${email}:`, emailError);
+      // Continue anyway - OTP is still valid for manual entry
+    }
 
     res.json({
       message: "OTP sent to your email successfully",

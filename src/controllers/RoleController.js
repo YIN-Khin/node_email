@@ -1,4 +1,5 @@
-const db = require("../models");
+// const db = require("../models");
+const db = require('../config/db');
 // const roleModel = require("../models/role.model");
 const Role = db.Role;
 // Create a new role

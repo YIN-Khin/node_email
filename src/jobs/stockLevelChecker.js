@@ -1,11 +1,14 @@
 // src/jobs/stockLevelChecker.js
-const NotificationService = require('../services/notificationService');
+const NotificationService = require("../services/notificationService");
+const { checkStockAndAlert } = require("../services/stockAlertService");
 
 class StockLevelChecker {
   constructor() {
     this.isRunning = false;
     this.intervalId = null;
-    this.checkInterval = 1 * 60 * 1000; // 30 minutes in milliseconds
+    // this.checkInterval = 30 * 60 * 1000; // 30 minutes in milliseconds
+    this.checkInterval = 10 * 60 * 1000; // 30 minutes in milliseconds
+    // this.checkInterval = 5 * 60 * 1000; // 5 minutes for testing
     this.lowStockThreshold = 10;
     this.criticalStockThreshold = 5;
   }
@@ -16,11 +19,6 @@ class StockLevelChecker {
       // console.log('📊 Stock level checker is already running');
       return;
     }
-
-    // console.log('🚀 Starting stock level checker...');
-    // console.log(`⏰ Check interval: ${this.checkInterval / 1000 / 60} minutes`);
-    // console.log(`📉 Low stock threshold: ${this.lowStockThreshold}`);
-    // console.log(`⚠️ Critical stock threshold: ${this.criticalStockThreshold}`);
 
     // Run initial check
     this.runCheck();
@@ -41,14 +39,14 @@ class StockLevelChecker {
     }
 
     // console.log('🛑 Stopping stock level checker...');
-    
+
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
 
     this.isRunning = false;
-    console.log('✅ Stock level checker stopped');
+    console.log("✅ Stock level checker stopped");
   }
 
   // Run a single stock level check
@@ -57,40 +55,57 @@ class StockLevelChecker {
       // console.log('🔍 Running scheduled stock level check...');
       const notificationsCreated = await NotificationService.checkStockLevels(
         this.lowStockThreshold,
-        this.criticalStockThreshold
+        this.criticalStockThreshold,
       );
-      
+
+      // Also send email alerts to suppliers
+      try {
+        const emailAlerts = await checkStockAndAlert(
+          this.lowStockThreshold,
+          this.criticalStockThreshold,
+        );
+        if (emailAlerts > 0) {
+          console.log(`📧 Sent ${emailAlerts} email alerts to suppliers`);
+        }
+      } catch (emailError) {
+        console.error("❌ Error sending email alerts:", emailError);
+      }
+
       if (notificationsCreated > 0) {
-        console.log(`✅ Stock check completed: ${notificationsCreated} new notifications created`);
+        console.log(
+          `✅ Stock check completed: ${notificationsCreated} new notifications created`,
+        );
       } else {
-        console.log('✅ Stock check completed: No new notifications needed');
+        console.log("✅ Stock check completed: No new notifications needed");
       }
     } catch (error) {
-      console.error('❌ Error during scheduled stock level check:', error);
+      console.error("❌ Error during scheduled stock level check:", error);
     }
   }
 
   // Run a manual check (can be called via API)
   async runManualCheck() {
-    console.log('🔍 Running manual stock level check...');
+    console.log("🔍 Running manual stock level check...");
     try {
       const notificationsCreated = await NotificationService.checkStockLevels(
         this.lowStockThreshold,
-        this.criticalStockThreshold
+        this.criticalStockThreshold,
       );
-      
-      console.log(`✅ Manual stock check completed: ${notificationsCreated} notifications created`);
+
+      console.log(
+        `✅ Manual stock check completed: ${notificationsCreated} notifications created`,
+      );
       return {
         success: true,
         notificationsCreated,
-        message: `Stock check completed. ${notificationsCreated} notifications created.`
+        message: `Stock check completed. ${notificationsCreated} notifications created.`,
       };
     } catch (error) {
-      console.error('❌ Error during manual stock level check:', error);
+      console.error("❌ Error during manual stock level check:", error);
       return {
         success: false,
         error: error.message,
-        message: 'Error during stock level check'
+        message: "Error during stock level check",
       };
     }
   }
@@ -99,13 +114,15 @@ class StockLevelChecker {
   updateThresholds(lowStock = 10, criticalStock = 5) {
     this.lowStockThreshold = lowStock;
     this.criticalStockThreshold = criticalStock;
-    console.log(`📊 Updated thresholds - Low: ${lowStock}, Critical: ${criticalStock}`);
+    console.log(
+      `📊 Updated thresholds - Low: ${lowStock}, Critical: ${criticalStock}`,
+    );
   }
 
   // Update check interval
-  updateInterval(minutes = 30) {
+  updateInterval(minutes = 1) {
     const newInterval = minutes * 60 * 1000;
-    
+
     if (this.isRunning) {
       this.stop();
       this.checkInterval = newInterval;
@@ -113,7 +130,7 @@ class StockLevelChecker {
     } else {
       this.checkInterval = newInterval;
     }
-    
+
     console.log(`⏰ Updated check interval to ${minutes} minutes`);
   }
 
@@ -125,31 +142,35 @@ class StockLevelChecker {
       checkIntervalMinutes: this.checkInterval / 1000 / 60,
       lowStockThreshold: this.lowStockThreshold,
       criticalStockThreshold: this.criticalStockThreshold,
-      nextCheck: this.isRunning ? new Date(Date.now() + this.checkInterval) : null
+      nextCheck: this.isRunning
+        ? new Date(Date.now() + this.checkInterval)
+        : null,
     };
   }
-  
+
   // Force immediate check (without affecting schedule)
   async forceCheck() {
-    console.log('🔍 Forcing immediate stock level check...');
+    console.log("🔍 Forcing immediate stock level check...");
     try {
       const notificationsCreated = await NotificationService.checkStockLevels(
         this.lowStockThreshold,
-        this.criticalStockThreshold
+        this.criticalStockThreshold,
       );
-      
-      console.log(`✅ Forced stock check completed: ${notificationsCreated} notifications created`);
+
+      console.log(
+        `✅ Forced stock check completed: ${notificationsCreated} notifications created`,
+      );
       return {
         success: true,
         notificationsCreated,
-        message: `Forced stock check completed. ${notificationsCreated} notifications created.`
+        message: `Forced stock check completed. ${notificationsCreated} notifications created.`,
       };
     } catch (error) {
-      console.error('❌ Error during forced stock level check:', error);
+      console.error("❌ Error during forced stock level check:", error);
       return {
         success: false,
         error: error.message,
-        message: 'Error during forced stock level check'
+        message: "Error during forced stock level check",
       };
     }
   }

@@ -13,6 +13,10 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING(20),
         allowNull: false,
       },
+      email: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
       phone_first: {
         type: DataTypes.STRING(20),
         allowNull: true,
@@ -31,19 +35,19 @@ module.exports = (sequelize) => {
       timestamps: true,
       createdAt: "createdAt",
       updatedAt: "updatedAt",
-    }
+    },
   );
 
   // Define associations
-  Supplier.associate = function(models) {
+  Supplier.associate = function (models) {
     try {
       if (models.Purchase) {
         Supplier.hasMany(models.Purchase, { foreignKey: "supplier_id" });
       }
       if (models.Product) {
-        Supplier.hasMany(models.Product, { 
+        Supplier.hasMany(models.Product, {
           foreignKey: "supplier_id",
-          as: "Products"
+          as: "Products",
         });
       }
     } catch (error) {

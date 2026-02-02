@@ -1,5 +1,6 @@
 // services/notificationService.js
-const db = require("../models");
+const db = require("../config/db");
+const { Op } = require('sequelize');
 const Notification = db.Notification;
 const Product = db.Product;
 const Brand = db.Brand;
@@ -137,7 +138,7 @@ class NotificationService {
             reference_id: product.id,
             type: ["out_of_stock", "low_stock"],
             created_at: {
-              [db.Sequelize.Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000),
+              [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000),
             },
           },
           order: [["created_at", "DESC"]],
@@ -254,7 +255,7 @@ class NotificationService {
           reference_id: product.id,
           type: ["out_of_stock", "low_stock"],
           created_at: {
-            [db.Sequelize.Op.gte]: new Date(Date.now() - 2 * 60 * 60 * 1000),
+            [Op.gte]: new Date(Date.now() - 2 * 60 * 60 * 1000),
           },
         },
         order: [["created_at", "DESC"]],
@@ -317,7 +318,7 @@ class NotificationService {
       const deletedCount = await Notification.destroy({
         where: {
           created_at: {
-            [db.Sequelize.Op.lt]: cutoffDate,
+            [Op.lt]: cutoffDate,
           },
           is_read: true,
         },

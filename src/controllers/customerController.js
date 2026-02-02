@@ -1,5 +1,6 @@
 // customerController.js
-const db = require('../models');
+const db = require('../config/db');
+// const db = require('../models');
 const Customer = db.Customer;
 
 // Create a new customer

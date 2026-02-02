@@ -1,4 +1,4 @@
-// db.js - Updated to use Sequelize with models
+// config/database.js
 const { Sequelize } = require('sequelize');
 const path = require('path');
 const fs = require('fs');
@@ -26,27 +26,17 @@ const modelFiles = fs.readdirSync(modelsPath)
 
 // Load each model
 modelFiles.forEach(file => {
-  try {
-    const modelPath = path.join(modelsPath, file);
-    const model = require(modelPath)(sequelize, Sequelize.DataTypes);
-    if (model && model.name) {
-      db[model.name] = model;
-      console.log(`✅ ${model.name} model loaded`);
-    }
-  } catch (error) {
-    console.log(`❌ Failed to load model from ${file}:`, error.message);
+  const modelPath = path.join(modelsPath, file);
+  const model = require(modelPath)(sequelize);
+  if (model && model.name) {
+    db[model.name] = model;
   }
 });
 
-// Set up associations after all models are loaded
+// Set up associations
 Object.keys(db).forEach(modelName => {
   if (db[modelName].associate) {
-    try {
-      db[modelName].associate(db);
-      console.log(`✅ ${modelName} associations set up`);
-    } catch (error) {
-      console.log(`❌ Failed to set up associations for ${modelName}:`, error.message);
-    }
+    db[modelName].associate(db);
   }
 });
 

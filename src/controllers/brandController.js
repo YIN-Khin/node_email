@@ -1,5 +1,5 @@
 
-const db = require('../models');
+const db = require('../config/db');
 const Brand = db.Brand;
 
 const getBrandAll = async(req , res)=>{
