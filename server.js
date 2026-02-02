@@ -658,7 +658,7 @@ io.on("connection", (socket) => {
 // ✅ Health check
 app.get("/health", async (req, res) => {
   try {
-    await sequelize.authenticate();
+    await db.authenticate();
     res.json({
       status: "OK",
       db: "connected",
@@ -717,8 +717,8 @@ app.use((err, req, res, next) => {
 // ✅ DB Sync
 async function syncDatabase() {
   try {
-    await sequelize.authenticate();
-    await sequelize.sync({ alter: process.env.NODE_ENV !== "production" });
+    await db.authenticate();
+    await db.sync({ alter: process.env.NODE_ENV !== "production" });
     return true;
   } catch (error) {
     console.error("❌ DB sync/auth error:", error.message);
