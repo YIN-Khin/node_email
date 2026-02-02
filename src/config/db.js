@@ -61,13 +61,15 @@
 require("dotenv").config();
 const { Sequelize } = require("sequelize");
 
-const DATABASE_URL = process.env.DATABASE_URL;
+const url = process.env.DATABASE_URL || process.env.MYSQL_URL;
 
-if (!DATABASE_URL || !DATABASE_URL.startsWith("mysql")) {
-  throw new Error("DATABASE_URL is missing/invalid. Must start with mysql://");
+if (!url || !url.startsWith("mysql://")) {
+  throw new Error(
+    "DB url missing. Set DATABASE_URL or MYSQL_URL (mysql://...)",
+  );
 }
 
-const sequelize = new Sequelize(DATABASE_URL, {
+const sequelize = new Sequelize(url, {
   dialect: "mysql",
   logging: false,
   dialectOptions: {
