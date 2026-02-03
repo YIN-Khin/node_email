@@ -58,28 +58,32 @@
 
 // module.exports = db;
 
-
-
 ////
 
 require("dotenv").config();
 const { Sequelize } = require("sequelize");
 
-const url = process.env.DATABASE_URL; // only this in production
+const url = process.env.DATABASE_URL;
 
 if (!url || !url.startsWith("mysql://")) {
   throw new Error("DATABASE_URL missing/invalid. Must start with mysql://");
 }
 
+const isPublic = url.includes("proxy.rlwy.net");
+
 const sequelize = new Sequelize(url, {
   dialect: "mysql",
   logging: false,
-  dialectOptions: {
-    ssl: { require: true, rejectUnauthorized: false },
-  },
-  
+  dialectOptions: isPublic
+    ? {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
+      }
+    : {},
 });
-console.log("DATABASE_URL =", process.env.DATABASE_URL);
 
+console.log("✅ DATABASE_URL loaded");
 
 module.exports = sequelize;

@@ -258,7 +258,6 @@
 //     }
 //   });
 
-
 ///===================================================///////////
 
 require("dotenv").config();
@@ -267,6 +266,10 @@ const express = require("express");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
+
+// ✅ Load models + sequelize
+const db = require("./src/models");
+const sequelize = db.sequelize;
 
 // Routes
 const customerRoute = require("./src/routes/customerRoute");
@@ -288,10 +291,6 @@ const dashboardRoute = require("./src/routes/dashboardRoute");
 const stockRoutes = require("./src/routes/stockRoutes");
 const StaffRoutes = require("./src/routes/StaffRoute");
 
-// ✅ Load models + sequelize
-const db = require("./src/models");
-const sequelize = db.sequelize;
-
 // Jobs
 const stockLevelChecker = require("./src/jobs/stockLevelChecker");
 const expirationChecker = require("./src/jobs/expirationChecker");
@@ -299,14 +298,14 @@ const expirationChecker = require("./src/jobs/expirationChecker");
 const app = express();
 const server = http.createServer(app);
 
-// ✅ Allowed origins from ENV
+// ✅ Allowed origins
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
   : ["http://localhost:3000"];
 
 const corsOptions = {
   origin: (origin, cb) => {
-    if (!origin) return cb(null, true); // Postman/curl/server-to-server
+    if (!origin) return cb(null, true);
     if (allowedOrigins.includes("*")) return cb(null, true);
     if (allowedOrigins.includes(origin)) return cb(null, true);
     return cb(new Error(`CORS blocked: ${origin}`));
@@ -315,10 +314,7 @@ const corsOptions = {
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 };
 
-// ✅ CORS
 app.use(cors(corsOptions));
-
-// ✅ Preflight (IMPORTANT: use same options)
 app.options(/.*/, cors(corsOptions));
 
 app.use(express.json({ limit: "50mb" }));
@@ -399,36 +395,32 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ✅ DB sync (SAFE)
-const isProd = process.env.NODE_ENV === "production";
-async function syncDatabase() {
+// ✅ DB init (single, safe)
+async function initDatabase() {
+  const isProd = process.env.NODE_ENV === "production";
+
   try {
     await sequelize.authenticate();
+    console.log("✅ DB connected");
 
-    await sequelize.authenticate();
-
-    // ✅ production: never alter
+    // ✅ Only alter in dev
     await sequelize.sync({ alter: !isProd });
-    if (process.env.NODE_ENV === "production") {
-      await sequelize.sync({ alter: false });
-    } else {
-      await sequelize.sync({ alter: true });
-    }
 
+    console.log("✅ DB sync done");
     return true;
-  } catch (e) {
-    console.error("❌ DB sync/auth error:", e.message);
+  } catch (err) {
+    console.error("❌ DB init error:", err.message);
     return false;
   }
 }
 
 // ✅ Start server
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8080;
 
 server.listen(PORT, "0.0.0.0", async () => {
   console.log(`✅ Server running on port ${PORT}`);
 
-  const ok = await syncDatabase();
+  const ok = await initDatabase();
   if (!ok) {
     console.warn(
       "⚠️ Server running but DB not connected. Jobs will not start.",
@@ -436,7 +428,7 @@ server.listen(PORT, "0.0.0.0", async () => {
     return;
   }
 
-  // ✅ Start jobs safely
+  // ✅ Start jobs
   try {
     stockLevelChecker.start();
     console.log("✅ Stock level checker started");

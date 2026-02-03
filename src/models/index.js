@@ -1,63 +1,57 @@
-// This file is not used - models are loaded directly in config/db.js
-// All model imports and associations are handled in src/config/db.js
+// src/models/index.js
+const fs = require("fs");
+const path = require("path");
+const Sequelize = require("sequelize");
+const sequelize = require("../config/db"); // must export Sequelize instance
 
-// module.exports = {};
+const db = {};
 
+db.Sequelize = Sequelize;
+db.sequelize = sequelize;
 
+// Load all model files except index.js
+fs.readdirSync(__dirname)
+  .filter((file) => file !== "index.js" && file.endsWith(".js"))
+  .forEach((file) => {
+    const fullPath = path.join(__dirname, file);
 
-// This file is not used - models are loaded directly in config/db.js
-// All model imports and associations are handled in src/config/db.js
+    try {
+      const modelFactory = require(fullPath);
 
-// module.exports = {};
-// const fs = require("fs");
-// const path = require("path");
-// const Sequelize = require("sequelize");
-// const sequelize = require("../config/db");
+      if (typeof modelFactory !== "function") {
+        console.log(`⚠️ Skip (not a model factory): ${file}`);
+        return;
+      }
 
-// const db = {};
-// db.Sequelize = Sequelize;
-// db.sequelize = sequelize;
+      const model = modelFactory(sequelize, Sequelize.DataTypes);
 
-// fs.readdirSync(__dirname)
-//   .filter((file) => file !== "index.js" && file.endsWith(".js"))
-//   .forEach((file) => {
-//     try {
-//       const modelFactory = require(path.join(__dirname, file));
+      if (!model || !model.name) {
+        console.log(`❌ Invalid model export in: ${file}`);
+        return;
+      }
 
-//       if (typeof modelFactory !== "function") {
-//         console.log(`⚠️ Skip (not a model factory): ${file}`);
-//         return;
-//       }
+      db[model.name] = model;
+      console.log(`✅ Loaded model: ${model.name} from ${file}`);
+    } catch (err) {
+      console.log(`❌ Failed to load model file ${file}:`, err.message);
+    }
+  });
 
-//       const model = modelFactory(sequelize, Sequelize.DataTypes);
+// Run associations
+Object.keys(db).forEach((name) => {
+  if (db[name] && typeof db[name].associate === "function") {
+    try {
+      db[name].associate(db);
+      console.log(`✅ Associations set for: ${name}`);
+    } catch (err) {
+      console.log(`❌ Association error in ${name}:`, err.message);
+    }
+  }
+});
 
-//       if (!model || !model.name) {
-//         console.log(`❌ Invalid model export in: ${file}`);
-//         return;
-//       }
+console.log(
+  "✅ Sequelize models:",
+  Object.keys(db).filter((k) => !["Sequelize", "sequelize"].includes(k)),
+);
 
-//       db[model.name] = model;
-//       console.log(`✅ Loaded model: ${model.name} from ${file}`);
-//     } catch (e) {
-//       console.log(`❌ Failed to load model file ${file}:`, e.message);
-//     }
-//   });
-
-// // Run associations
-// Object.keys(db).forEach((name) => {
-//   if (db[name] && typeof db[name].associate === "function") {
-//     try {
-//       db[name].associate(db);
-//       console.log(`✅ Associations set for: ${name}`);
-//     } catch (e) {
-//       console.log(`❌ Association error in ${name}:`, e.message);
-//     }
-//   }
-// });
-
-// console.log(
-//   "✅ Sequelize models:",
-//   Object.keys(db).filter((k) => !["Sequelize", "sequelize"].includes(k)),
-// );
-
-// module.exports = db;
+module.exports = db;
