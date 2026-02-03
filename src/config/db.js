@@ -66,16 +66,51 @@
 require("dotenv").config();
 const { Sequelize } = require("sequelize");
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is missing");
-}
+let sequelize;
 
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-  dialect: "mysql",
-  logging: false,
-  dialectOptions: {
-    ssl: false, // INTERNAL connection → no SSL
-  },
-});
+// Railway deployment: Use DATABASE_URL if available (for Railway MySQL)
+if (process.env.DATABASE_URL) {
+  console.log("✅ Using Railway DATABASE_URL connection");
+  sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: "mysql",
+    logging: process.env.NODE_ENV === "development" ? console.log : false,
+    dialectOptions: {
+      ssl: {
+        rejectUnauthorized: false, // Required for Railway MySQL
+      },
+    },
+    pool: {
+      max: 5,
+      min: 0,
+      acquire: 30000,
+      idle: 10000,
+    },
+  });
+} else {
+  // Fallback to individual environment variables
+  console.log("⚠️ Using individual DB environment variables");
+  
+  if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_NAME) {
+    throw new Error("Missing required database environment variables");
+  }
+
+  sequelize = new Sequelize(
+    process.env.DB_NAME,
+    process.env.DB_USER,
+    process.env.DB_PASSWORD || "",
+    {
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT || 3306,
+      dialect: "mysql",
+      logging: process.env.NODE_ENV === "development" ? console.log : false,
+      pool: {
+        max: 5,
+        min: 0,
+        acquire: 30000,
+        idle: 10000,
+      },
+    }
+  );
+}
 
 module.exports = sequelize;

@@ -68,45 +68,22 @@ const stockRoutes = require("./src/routes/stockRoutes");
 const StaffRoutes = require("./src/routes/StaffRoute");
 // console.log('✅ Staff routes loaded');
 
-// const db = require("./src/config/db");
+const db = require("./src/config/db");
 const sequelize = db.sequelize;
-const db = require("./src/models");
-// const sequelize = db.sequelize;
-
 const app = express();
 const server = http.createServer(app);
 const fs = require("fs");
-// const io = socketIo(server, {
-//   cors: {
-//     origin: "*",
-//     // methods: ["GET", "POST"],
-//     // origin: "*.railway.app",
-//     // credentials: true,
-//     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-//     credentials: false,
-//   },
-// });
-// console.log('✅ Server components created');
-//==================================================================//
- // ✅ CORS
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
-  : ["http://localhost:3000"];
-
-const corsOptions = {
-  origin: (origin, cb) => {
-    if (!origin) return cb(null, true);
-    if (allowedOrigins.includes("*")) return cb(null, true);
-    if (allowedOrigins.includes(origin)) return cb(null, true);
-    return cb(new Error(`CORS blocked: ${origin}`));
+const io = socketIo(server, {
+  cors: {
+    origin: "*",
+    // methods: ["GET", "POST"],
+    // origin: "*.railway.app",
+    // credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    credentials: false,
   },
-  credentials: false,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-};
-app.use(cors(corsOptions));
-app.options(/.*/, cors(corsOptions));
-//=====================================================================//
-
+});
+// console.log('✅ Server components created');
 
 // Middleware
 // console.log('⚙️  Setting up middleware...');
@@ -116,6 +93,15 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 // Make io accessible in routes
 app.set("io", io);
 // console.log('✅ Middleware configured');
+
+// Health check endpoint for Railway
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
 
 // Routes
 // console.log('🛣️  Setting up routes...');
