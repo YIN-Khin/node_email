@@ -1,25 +1,10 @@
 const { Op } = require("sequelize");
-// const db = require('../models');
 const db = require('../models');
 const Brand = db.Brand;
 const Category = db.Category;
 const Product = db.Product;
 const Supplier = db.Supplier;
 const NotificationService = require('../services/notificationService');
-
-// Make sure models are loaded
-if (!Product) {
-  console.error('Product model not loaded');
-}
-if (!Brand) {
-  console.error('Brand model not loaded');
-}
-if (!Category) {
-  console.error('Category model not loaded');
-}
-if (!Supplier) {
-  console.error('Supplier model not loaded');
-}
 
 const getAllProduct = async (req, res) => {
   try {

@@ -5,13 +5,6 @@ const User = db.User;
 const Role = db.Role;
 const Permission = db.Permission;
 
-// Verify models are loaded
-if (!User) {
-  console.error("User model is not loaded properly from models/index.js");
-}
-if (!Role) {
-  console.error("Role model is not loaded properly from models/index.js");
-}
 const TOKEN_SECRET = process.env.TOKEN_SECRET || "SJDHFKJSDFjshsdhKJ%(*%#74y35";
 
 const getAllUsers = async (req, res) => {
