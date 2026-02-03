@@ -64,28 +64,19 @@
 require("dotenv").config();
 const { Sequelize } = require("sequelize");
 
-const url = process.env.DATABASE_URL;
-
-if (!url || !url.startsWith("mysql://")) {
-  throw new Error("DATABASE_URL missing/invalid. Must start with mysql://");
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is missing");
 }
 
-// Railway public proxy needs SSL. Internal URL usually doesn't.
-const useSSL =
-  url.includes("proxy.rlwy.net") ||
-  url.includes("railway") ||
-  process.env.DB_SSL === "true";
-
-const sequelize = new Sequelize(url, {
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: "mysql",
   logging: false,
-  dialectOptions: useSSL
-    ? {
-        ssl: { require: true, rejectUnauthorized: false },
-      }
-    : {},
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,
+    },
+  },
 });
-
-console.log("✅ DATABASE_URL loaded");
 
 module.exports = sequelize;

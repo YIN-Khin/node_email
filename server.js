@@ -264,7 +264,7 @@
 // server.js
 require("dotenv").config();
 
-// ✅ Load DB FIRST
+// ✅ Load DB FIRST (ONLY ONCE)
 const db = require("./src/models");
 const sequelize = db.sequelize;
 

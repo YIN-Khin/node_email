@@ -3,7 +3,6 @@ const fs = require("fs");
 const path = require("path");
 const Sequelize = require("sequelize");
 const sequelize = require("../config/db");
-
 const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
