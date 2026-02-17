@@ -8,7 +8,7 @@ class ExpirationChecker {
     this.isRunning = false;
     this.intervalId = null;
     // this.checkInterval = 24 * 60 * 60 * 1000; // 24 hours - recommended for production
-    this.checkInterval = 1 * 60 * 1000; // 1 hours test for production
+    this.checkInterval = 1 * 1000; // 1 hours test for production
 
     this.autoDismissInterval = null;
   }

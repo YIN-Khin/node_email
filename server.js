@@ -109,6 +109,7 @@ app.use("/api", reportRoutes);
 app.use("/api", dashboardRoute);
 // console.log('✅ Report routes registered');
 // console.log('✅ Dashboard routes registered');
+require("./src/routes/UserRoute")(app);
 
 notificationRoutes(app);
 // console.log('✅ Notification routes registered');

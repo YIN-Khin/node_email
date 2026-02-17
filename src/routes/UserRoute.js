@@ -36,6 +36,7 @@ const {
   getUserDetails,
   updateUser,
   deleteUser,
+  createUserByAdmin
 } = require("../controllers/UserController");
 
 module.exports = (app) => {
@@ -48,6 +49,7 @@ module.exports = (app) => {
   app.post("/api/user/resetPassword", resetPassword);
 
   // 🔒 PROTECTED
+  app.post("/api/user", auth.validate_token(), createUserByAdmin);
   app.get("/api/user", auth.validate_token(), getAllUsers);
   app.get("/api/user/me", auth.validate_token(), getCurrentUser);
   app.get("/api/user/permissions", auth.validate_token(), getUserPermissions);

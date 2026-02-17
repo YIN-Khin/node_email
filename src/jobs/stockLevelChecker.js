@@ -7,7 +7,7 @@ class StockLevelChecker {
     this.isRunning = false;
     this.intervalId = null;
     // this.checkInterval = 30 * 60 * 1000; // 30 minutes in milliseconds
-    this.checkInterval = 10 * 60 * 1000; // 30 minutes in milliseconds
+    this.checkInterval = 1 * 60 * 1000; // 30 minutes in milliseconds
     // this.checkInterval = 5 * 60 * 1000; // 5 minutes for testing
     this.lowStockThreshold = 10;
     this.criticalStockThreshold = 5;
