@@ -1,6 +1,6 @@
 // services/notificationService.js
 const db = require("../models");
-const { Op } = require('sequelize');
+const { Op } = require("sequelize");
 const Notification = db.Notification;
 const Product = db.Product;
 const Brand = db.Brand;

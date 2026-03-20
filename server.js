@@ -1,4 +1,4 @@
-console.log('🚀 Starting Inventory Management System Server...');
+console.log("🚀 Starting Inventory Management System Server...");
 
 const express = require("express");
 // console.log('✅ Express loaded');
@@ -238,7 +238,7 @@ server
           console.log("🔄 Starting stock level monitoring...");
           try {
             stockLevelChecker.start();
-            console.log("✅ Stock level checker started successfully");
+            // console.log("✅ Stock level checker started successfully");
           } catch (error) {
             console.error("❌ Failed to start stock level checker:", error);
           }
@@ -267,7 +267,6 @@ server
       process.exit(1);
     }
   });
-
 
 ///===================================================///////////
 
